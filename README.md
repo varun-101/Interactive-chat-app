@@ -40,7 +40,7 @@ Before you begin, ensure you have the following installed:
 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/real-time-chat-app.git
+git clone https://github.com/varun-101/Interactive-chat-app.git
 ```
 
 2. Install Server dependencies
