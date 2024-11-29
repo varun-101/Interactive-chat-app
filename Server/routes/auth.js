@@ -4,6 +4,22 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
+// Add CORS handling for auth routes
+router.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (corsOptions.origin.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Register route
 router.post('/register', async (req, res) => {
   try {
@@ -56,8 +72,14 @@ router.post('/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    res.json({ token, userId: user._id, username });
+    res.json({ 
+      token, 
+      userId: user._id, 
+      username,
+      message: 'Login successful'
+    });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Error logging in', error: error.message });
   }
 });

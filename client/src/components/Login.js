@@ -13,14 +13,24 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/auth/login`, {
-        username,
-        password,
-      });
-      login(response.data);
-      navigate('/chat');
-    } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred');
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/auth/login`,
+        { username, password },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          withCredentials: true
+        }
+      );
+
+      if (response.data.token) {
+        login(response.data);
+        navigate('/chat');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error.response?.data?.message || 'An error occurred during login');
     }
   };
 
