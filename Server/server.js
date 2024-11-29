@@ -18,15 +18,26 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: ["http://localhost:3000", "https://interactive-chat-app-evo2.vercel.app/"],
-    methods: ["GET", "POST"]
+    origin: [
+      "http://localhost:3000", 
+      "https://interactive-chat-app-evo2.vercel.app",
+      "https://interactive-chat-app-evo2-oe001tl4r.vercel.app"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
 dotenv.config();
 app.use(cors({
-  origin: ["http://localhost:3000", "https://interactive-chat-app-evo2.vercel.app/"],
-  credentials: true
+  origin: [
+    "http://localhost:3000", 
+    "https://interactive-chat-app-evo2.vercel.app",
+    "https://interactive-chat-app-evo2-oe001tl4r.vercel.app"
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
@@ -160,6 +171,18 @@ app.post('/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
-  const imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+  const imageUrl = `${process.env.API_URL}/uploads/${req.file.filename}`;
   res.json({ imageUrl });
+});
+
+// Add OPTIONS handling for preflight requests
+app.options('*', cors());
+
+// Add headers middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Credentials', true);
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  next();
 });
