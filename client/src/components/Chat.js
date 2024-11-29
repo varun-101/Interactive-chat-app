@@ -22,21 +22,29 @@ function Chat() {
 
   useEffect(() => {
     const newSocket = io(process.env.REACT_APP_API_URL, {
+      path: '/socket.io/',
       transports: ['websocket', 'polling'],
       withCredentials: true,
       forceNew: true,
-      timeout: 10000,
       reconnection: true,
       reconnectionAttempts: 5,
-      reconnectionDelay: 1000
+      reconnectionDelay: 1000,
+      timeout: 20000,
+      auth: {
+        token: localStorage.getItem('token')
+      }
     });
     
     newSocket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
     });
 
-    newSocket.on('connect_timeout', () => {
-      console.error('Socket connection timeout');
+    newSocket.on('connect', () => {
+      console.log('Socket connected successfully');
+    });
+
+    newSocket.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
     });
 
     setSocket(newSocket);

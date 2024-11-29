@@ -18,12 +18,13 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: "*",
+    origin: ["https://interactive-chat-app-evo2.vercel.app", "http://localhost:3000"],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
-    transports: ['websocket', 'polling']
+    allowedHeaders: ["Content-Type", "Authorization"]
   },
+  transports: ['websocket', 'polling'],
+  path: '/socket.io/',
   allowEIO3: true,
   pingTimeout: 60000,
   pingInterval: 25000
@@ -31,7 +32,7 @@ const io = new Server(httpServer, {
 
 dotenv.config();
 app.use(cors({
-  origin: "*",
+  origin: ["https://interactive-chat-app-evo2.vercel.app", "http://localhost:3000"],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
