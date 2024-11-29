@@ -142,9 +142,11 @@ function Chat() {
           setAllUsers(prevUsers => {
             const newUsers = [...chatUsers];
             prevUsers.forEach(prevUser => {
-              const existingUser = newUsers.find(u => u.userId === prevUser.userId);
-              if (existingUser) {
+              if (newUsers.find(u => u.userId === prevUser.userId)) {
+                const existingUser = newUsers.find(u => u.userId === prevUser.userId);
                 existingUser.isOnline = prevUser.isOnline;
+              } else {
+                newUsers.push(prevUser);
               }
             });
             return newUsers;
@@ -153,13 +155,16 @@ function Chat() {
           console.error('Error loading chat history:', error);
         }
       };
+
       loadChatHistory();
 
       return () => {
         socket.off('users_status');
+        socket.off('receive_message');
+        socket.off('user_typing');
       };
     }
-  }, [socket, user, selectedUser]);
+  }, [socket, user, selectedUser, onlineUsers]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
