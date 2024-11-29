@@ -22,14 +22,14 @@ function Chat() {
 
   useEffect(() => {
     const newSocket = io(process.env.REACT_APP_API_URL, {
-      path: '/socket.io/',
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'],
       withCredentials: true,
       forceNew: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       timeout: 20000,
+      autoConnect: false,
       auth: {
         token: localStorage.getItem('token')
       }
@@ -37,6 +37,11 @@ function Chat() {
     
     newSocket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        description: error.description,
+        type: error.type
+      });
     });
 
     newSocket.on('connect', () => {
@@ -45,7 +50,16 @@ function Chat() {
 
     newSocket.on('disconnect', (reason) => {
       console.log('Socket disconnected:', reason);
+      if (reason === 'io server disconnect') {
+        newSocket.connect();
+      }
     });
+
+    newSocket.on('error', (error) => {
+      console.error('Socket error:', error);
+    });
+
+    newSocket.connect();
 
     setSocket(newSocket);
 

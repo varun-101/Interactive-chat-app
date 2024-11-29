@@ -23,11 +23,17 @@ const io = new Server(httpServer, {
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"]
   },
-  transports: ['websocket', 'polling'],
-  path: '/socket.io/',
+  transports: ['polling', 'websocket'],
   allowEIO3: true,
   pingTimeout: 60000,
-  pingInterval: 25000
+  pingInterval: 25000,
+  cookie: {
+    name: "io",
+    path: "/",
+    httpOnly: true,
+    sameSite: "none",
+    secure: true
+  }
 });
 
 dotenv.config();
@@ -35,7 +41,8 @@ app.use(cors({
   origin: ["https://interactive-chat-app-evo2.vercel.app", "http://localhost:3000"],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['set-cookie']
 }));
 app.use(express.json());
 
@@ -191,4 +198,19 @@ io.engine.on("connection_error", (err) => {
   console.log(err.code);     // the error code, for example 1
   console.log(err.message);  // the error message, for example "Session ID unknown"
   console.log(err.context);  // some additional error context
+});
+
+// Add this near your other routes
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+// Add socket connection logging
+io.on('connection', (socket) => {
+  console.log('New client connected:', socket.id);
+  
+  socket.on('disconnect', (reason) => {
+    console.log('Client disconnected:', socket.id, 'Reason:', reason);
+  });
+
 });
