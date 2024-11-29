@@ -21,7 +21,7 @@ function Chat() {
   const [allUsers, setAllUsers] = useState([]);
 
   useEffect(() => {
-    const newSocket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000');
+    const newSocket = io(process.env.REACT_APP_API_URL);
     setSocket(newSocket);
 
     return () => newSocket.close();
@@ -74,7 +74,7 @@ function Chat() {
 
       const loadChatHistory = async () => {
         try {
-          const response = await axios.get(`http://localhost:5000/messages/${user.userId}`, {
+          const response = await axios.get(`${process.env.REACT_APP_API_URL}/messages/${user.userId}`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
           });
           
@@ -98,7 +98,7 @@ function Chat() {
           
           setMessages(history);
 
-          const usersResponse = await axios.get(`http://localhost:5000/auth/users`, {
+          const usersResponse = await axios.get(`${process.env.REACT_APP_API_URL}/auth/users`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
           });
           
@@ -179,7 +179,7 @@ function Chat() {
       formData.append('image', selectedFile);
       
       try {
-        const response = await axios.post('http://localhost:5000/upload', formData, {
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/upload`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         messageData.type = 'image';
