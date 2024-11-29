@@ -1,24 +1,13 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import cors from 'cors';
+import corsOptions from '../config/cors.js';
 
 const router = express.Router();
 
-// Add CORS handling for auth routes
-router.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (corsOptions.origin.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+// Use cors middleware with options
+router.use(cors(corsOptions));
 
 // Register route
 router.post('/register', async (req, res) => {
@@ -44,6 +33,7 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json({ token, userId: user._id, username });
   } catch (error) {
+    console.error('Registration error:', error);
     res.status(500).json({ message: 'Error creating user', error: error.message });
   }
 });
@@ -84,12 +74,13 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Add this new route to get all users
+// Get all users route
 router.get('/users', async (req, res) => {
   try {
     const users = await User.find({}, { username: 1 });
     res.json(users);
   } catch (error) {
+    console.error('Error fetching users:', error);
     res.status(500).json({ message: 'Error fetching users', error: error.message });
   }
 });

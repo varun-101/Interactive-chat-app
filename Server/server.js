@@ -13,6 +13,7 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import corsOptions from './config/cors.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -32,13 +33,7 @@ const io = new Server(httpServer, {
 });
 
 dotenv.config();
-app.use(cors({
-  origin: ["https://interactive-chat-app-evo2.vercel.app", "http://localhost:3000"],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['set-cookie']
-}));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use('/auth', authRoutes);
@@ -189,7 +184,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
 });
 
 // Add OPTIONS handling for preflight requests
-app.options('*', cors());
+app.options('*', cors(corsOptions));
 
 // Add headers middleware
 app.use((req, res, next) => {
