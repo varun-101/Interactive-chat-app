@@ -21,10 +21,31 @@ function Chat() {
   const [allUsers, setAllUsers] = useState([]);
 
   useEffect(() => {
-    const newSocket = io(process.env.REACT_APP_API_URL);
+    const newSocket = io(process.env.REACT_APP_API_URL, {
+      transports: ['websocket', 'polling'],
+      withCredentials: true,
+      forceNew: true,
+      timeout: 10000,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+    });
+    
+    newSocket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+    });
+
+    newSocket.on('connect_timeout', () => {
+      console.error('Socket connection timeout');
+    });
+
     setSocket(newSocket);
 
-    return () => newSocket.close();
+    return () => {
+      if (newSocket) {
+        newSocket.disconnect();
+      }
+    };
   }, []);
 
   useEffect(() => {

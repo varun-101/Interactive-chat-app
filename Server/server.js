@@ -18,23 +18,20 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: [
-      "http://localhost:3000", 
-      "https://interactive-chat-app-evo2.vercel.app",
-      "https://interactive-chat-app-evo2-oe001tl4r.vercel.app"
-    ],
-    methods: ["GET", "POST"],
-    credentials: true
-  }
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    transports: ['websocket', 'polling']
+  },
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
 dotenv.config();
 app.use(cors({
-  origin: [
-    "http://localhost:3000", 
-    "https://interactive-chat-app-evo2.vercel.app",
-    "https://interactive-chat-app-evo2-oe001tl4r.vercel.app"
-  ],
+  origin: "*",
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -185,4 +182,12 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   next();
+});
+
+// Add error handling for socket.io
+io.engine.on("connection_error", (err) => {
+  console.log(err.req);      // the request object
+  console.log(err.code);     // the error code, for example 1
+  console.log(err.message);  // the error message, for example "Session ID unknown"
+  console.log(err.context);  // some additional error context
 });
