@@ -22,36 +22,35 @@ function Chat() {
 
   useEffect(() => {
     const newSocket = io(process.env.REACT_APP_API_URL, {
-      transports: ['polling', 'websocket'],
+      transports: ['websocket', 'polling'],
       withCredentials: true,
       forceNew: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       timeout: 20000,
-      autoConnect: false
+      autoConnect: false,
+      path: '/socket.io/',
+      query: {
+        token: localStorage.getItem('token')
+      }
     });
     
     newSocket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
-      console.error('Error details:', {
-        message: error.message,
-        description: error.description,
-        type: error.type
-      });
+    });
+
+    newSocket.on('error', (error) => {
+      console.error('Socket error:', error);
     });
 
     newSocket.on('connect', () => {
       console.log('Socket connected successfully');
-      const token = localStorage.getItem('token');
-      if (token) {
-        newSocket.emit('authenticate', token);
-        if (user) {
-          newSocket.emit('user_connected', {
-            userId: user.userId,
-            username: user.username
-          });
-        }
+      if (user) {
+        newSocket.emit('user_connected', {
+          userId: user.userId,
+          username: user.username
+        });
       }
     });
 

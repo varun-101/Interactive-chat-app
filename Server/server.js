@@ -13,27 +13,83 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import corsOptions from './config/cors.js';
+import session from 'express-session';
+
+const corsOptions = {
+  origin: [
+    "https://interactive-chat-app-evo2.vercel.app",
+    "https://interactive-chat-app-evo2-cx04wjnoa.vercel.app",
+    "http://localhost:3000"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+};
 
 const app = express();
 const httpServer = createServer(app);
+
+// Apply CORS before any routes
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// Socket.IO setup with simplified configuration
 const io = new Server(httpServer, {
-  cors: {
-    origin: ["https://interactive-chat-app-evo2.vercel.app", "http://localhost:3000"],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"]
-  },
-  transports: ['polling', 'websocket'],
-  allowEIO3: true,
+  cors: corsOptions,
   pingTimeout: 60000,
   pingInterval: 25000,
-  upgradeTimeout: 30000,
-  maxHttpBufferSize: 1e8
+  transports: ['websocket', 'polling'],
+  allowEIO3: true,
+  cookie: {
+    name: "io",
+    path: "/",
+    httpOnly: true,
+    sameSite: "none",
+    secure: true
+  }
+});
+
+// Add session middleware
+const sessionMiddleware = session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: true,
+    sameSite: 'none',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+});
+
+app.use(sessionMiddleware);
+
+// Wrap socket middleware
+io.use((socket, next) => {
+  sessionMiddleware(socket.request, {}, next);
+});
+
+// Socket connection handling
+io.on('connection', (socket) => {
+  console.log('New client connected:', socket.id);
+
+  socket.on('error', (error) => {
+    console.error('Socket error:', error);
+  });
+
+  socket.on('connect_error', (error) => {
+    console.error('Connection error:', error);
+  });
+
+  // ... rest of your socket event handlers
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
 });
 
 dotenv.config();
-app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use('/auth', authRoutes);
