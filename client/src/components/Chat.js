@@ -29,10 +29,7 @@ function Chat() {
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       timeout: 20000,
-      autoConnect: false,
-      auth: {
-        token: localStorage.getItem('token')
-      }
+      autoConnect: false
     });
     
     newSocket.on('connect_error', (error) => {
@@ -46,17 +43,25 @@ function Chat() {
 
     newSocket.on('connect', () => {
       console.log('Socket connected successfully');
+      const token = localStorage.getItem('token');
+      if (token) {
+        newSocket.emit('authenticate', token);
+        if (user) {
+          newSocket.emit('user_connected', {
+            userId: user.userId,
+            username: user.username
+          });
+        }
+      }
     });
 
     newSocket.on('disconnect', (reason) => {
       console.log('Socket disconnected:', reason);
       if (reason === 'io server disconnect') {
-        newSocket.connect();
+        setTimeout(() => {
+          newSocket.connect();
+        }, 1000);
       }
-    });
-
-    newSocket.on('error', (error) => {
-      console.error('Socket error:', error);
     });
 
     newSocket.connect();
@@ -68,7 +73,7 @@ function Chat() {
         newSocket.disconnect();
       }
     };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (socket && user) {

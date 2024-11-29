@@ -27,13 +27,8 @@ const io = new Server(httpServer, {
   allowEIO3: true,
   pingTimeout: 60000,
   pingInterval: 25000,
-  cookie: {
-    name: "io",
-    path: "/",
-    httpOnly: true,
-    sameSite: "none",
-    secure: true
-  }
+  upgradeTimeout: 30000,
+  maxHttpBufferSize: 1e8
 });
 
 dotenv.config();
@@ -65,14 +60,45 @@ const onlineUsers = new Map();
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  console.log('New client connected:', socket.id);
+
+  // Handle authentication
+  socket.on('authenticate', (token) => {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.userId = decoded.userId;
+      console.log('Socket authenticated:', socket.id, 'User:', socket.userId);
+    } catch (error) {
+      console.error('Socket authentication failed:', error);
+    }
+  });
 
   socket.on('user_connected', (userData) => {
-    onlineUsers.set(userData.userId, {
-      socketId: socket.id,
-      username: userData.username
-    });
-    
+    console.log('User connected event:', userData);
+    if (userData && userData.userId) {
+      onlineUsers.set(userData.userId, {
+        socketId: socket.id,
+        username: userData.username
+      });
+      
+      const onlineUsersList = Array.from(onlineUsers.entries()).map(([userId, data]) => ({
+        userId,
+        username: data.username
+      }));
+      io.emit('users_status', onlineUsersList);
+    }
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log('Client disconnected:', socket.id, 'Reason:', reason);
+    // Remove user from online users
+    for (const [userId, data] of onlineUsers.entries()) {
+      if (data.socketId === socket.id) {
+        onlineUsers.delete(userId);
+        break;
+      }
+    }
+    // Emit updated users list
     const onlineUsersList = Array.from(onlineUsers.entries()).map(([userId, data]) => ({
       userId,
       username: data.username
@@ -128,24 +154,6 @@ io.on('connection', (socket) => {
     } catch (error) {
       console.error('Error saving message:', error);
       socket.emit('message_error', { error: 'Failed to send message' });
-    }
-  });
-
-  socket.on('disconnect', () => {
-    let disconnectedUser;
-    for (const [userId, data] of onlineUsers.entries()) {
-      if (data.socketId === socket.id) {
-        disconnectedUser = userId;
-        break;
-      }
-    }
-    if (disconnectedUser) {
-      onlineUsers.delete(disconnectedUser);
-      const onlineUsersList = Array.from(onlineUsers.entries()).map(([userId, data]) => ({
-        userId,
-        username: data.username
-      }));
-      io.emit('users_status', onlineUsersList);
     }
   });
 });
